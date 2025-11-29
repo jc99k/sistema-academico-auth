@@ -1,0 +1,64 @@
+{% extends 'sistema_academico/base.html' %}
+
+{% block title %}View Backup Codes - Sistema Academico{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-body p-5">
+                    <h2 class="text-center mb-4">
+                        <i class="bi bi-key-fill"></i> Your Backup Codes
+                    </h2>
+
+                    {% if backup_codes %}
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i>
+                        You have <strong>{{ backup_codes|length }}</strong> backup code(s) remaining.
+                        Each code can only be used once.
+                    </div>
+
+                    <div class="card bg-light mb-4">
+                        <div class="card-body">
+                            <div class="row g-2">
+                                {% for code in backup_codes %}
+                                <div class="col-6">
+                                    <code class="d-block p-2 bg-white border rounded text-center fs-5">
+                                        {{ code }}
+                                    </code>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'regenerate_backup_codes' %}" class="btn btn-warning">
+                            <i class="bi bi-arrow-clockwise"></i> Regenerate Codes
+                        </a>
+                        <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">
+                            Back to Dashboard
+                        </a>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-danger">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        You have no backup codes remaining!
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'regenerate_backup_codes' %}" class="btn btn-danger">
+                            <i class="bi bi-arrow-clockwise"></i> Generate New Codes
+                        </a>
+                        <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">
+                            Back to Dashboard
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

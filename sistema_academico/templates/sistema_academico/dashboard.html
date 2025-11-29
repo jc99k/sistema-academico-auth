@@ -1,0 +1,231 @@
+{% extends 'sistema_academico/base.html' %}
+{% load socialaccount %}
+{% load social_tags %}
+
+{% block title %}Dashboard - Sistema Academico{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="text-white mb-4">
+                <i class="bi bi-speedometer2"></i> Dashboard
+            </h1>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <div class="card shadow">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="bi bi-person-circle"></i> User Information
+                    </h5>
+                    <hr>
+                    <table class="table table-borderless">
+                        <tr>
+                            <td><strong>Name:</strong></td>
+                            <td>{{ user.get_full_name }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Email:</strong></td>
+                            <td>{{ user.email }}</td>
+                        </tr>
+                        {% if user.student_id %}
+                        <tr>
+                            <td><strong>Student ID:</strong></td>
+                            <td>{{ user.student_id }}</td>
+                        </tr>
+                        {% endif %}
+                        {% if user.employee_id %}
+                        <tr>
+                            <td><strong>Employee ID:</strong></td>
+                            <td>{{ user.employee_id }}</td>
+                        </tr>
+                        {% endif %}
+                        {% if user.role %}
+                        <tr>
+                            <td><strong>Role:</strong></td>
+                            <td><span class="badge bg-primary">{{ user.role.name }}</span></td>
+                        </tr>
+                        {% endif %}
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 mb-4">
+            <div class="card shadow">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="bi bi-shield-check"></i> Security Settings
+                    </h5>
+                    <hr>
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="flex-grow-1">
+                            <strong>Two-Factor Authentication</strong>
+                            <p class="text-muted small mb-0">Add an extra layer of security</p>
+                        </div>
+                        <div>
+                            {% if user.is_2fa_enabled %}
+                            <span class="badge bg-success">Enabled</span>
+                            {% else %}
+                            <span class="badge bg-warning">Disabled</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    {% if user.is_2fa_enabled %}
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'view_backup_codes' %}" class="btn btn-outline-primary">
+                            <i class="bi bi-key"></i> View Backup Codes
+                        </a>
+                        <a href="{% url 'regenerate_backup_codes' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-clockwise"></i> Regenerate Backup Codes
+                        </a>
+                        <a href="{% url 'disable_2fa' %}" class="btn btn-outline-danger">
+                            <i class="bi bi-shield-x"></i> Disable 2FA
+                        </a>
+                    </div>
+                    {% else %}
+                    <div class="d-grid">
+                        <a href="{% url 'setup_2fa' %}" class="btn btn-primary">
+                            <i class="bi bi-shield-plus"></i> Enable 2FA
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Social Accounts Section -->
+    <div class="row">
+        <div class="col-12 mb-4">
+            <div class="card shadow">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="bi bi-link-45deg"></i> Connected Accounts
+                    </h5>
+                    <hr>
+                    {% get_social_accounts user as accounts %}
+
+                    {% provider_available 'google' as google_available %}
+                    {% provider_available 'facebook' as facebook_available %}
+                    {% provider_available 'github' as github_available %}
+
+                    {% if google_available or facebook_available or github_available %}
+                    <div class="list-group list-group-flush">
+                        <!-- Google -->
+                        {% if google_available %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="bi bi-google text-danger"></i>
+                                <strong class="ms-2">Google</strong>
+                            </div>
+                            {% if accounts.google %}
+                            <div>
+                                <span class="badge bg-success me-2">Connected</span>
+                                <form method="post" action="{% url 'socialaccount_connections' %}" class="d-inline">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="account" value="{{ accounts.google.0.id }}">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Disconnect</button>
+                                </form>
+                            </div>
+                            {% else %}
+                            <a href="{% provider_login_url 'google' process='connect' %}" class="btn btn-sm btn-outline-primary">
+                                Connect
+                            </a>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+
+                        <!-- Facebook -->
+                        {% if facebook_available %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="bi bi-facebook text-primary"></i>
+                                <strong class="ms-2">Facebook</strong>
+                            </div>
+                            {% if accounts.facebook %}
+                            <div>
+                                <span class="badge bg-success me-2">Connected</span>
+                                <form method="post" action="{% url 'socialaccount_connections' %}" class="d-inline">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="account" value="{{ accounts.facebook.0.id }}">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Disconnect</button>
+                                </form>
+                            </div>
+                            {% else %}
+                            <a href="{% provider_login_url 'facebook' process='connect' %}" class="btn btn-sm btn-outline-primary">
+                                Connect
+                            </a>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+
+                        <!-- GitHub -->
+                        {% if github_available %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <i class="bi bi-github text-dark"></i>
+                                <strong class="ms-2">GitHub</strong>
+                            </div>
+                            {% if accounts.github %}
+                            <div>
+                                <span class="badge bg-success me-2">Connected</span>
+                                <form method="post" action="{% url 'socialaccount_connections' %}" class="d-inline">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="account" value="{{ accounts.github.0.id }}">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Disconnect</button>
+                                </form>
+                            </div>
+                            {% else %}
+                            <a href="{% provider_login_url 'github' process='connect' %}" class="btn btn-sm btn-outline-primary">
+                                Connect
+                            </a>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i>
+                        Social login providers have not been configured yet.
+                        <br><small class="text-muted">To enable social login, configure OAuth credentials in Django admin.</small>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if user.role %}
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="bi bi-key-fill"></i> Permissions
+                    </h5>
+                    <hr>
+                    {% if user.role.permissions.all %}
+                    <div class="row">
+                        {% for permission in user.role.permissions.all %}
+                        <div class="col-md-4 mb-2">
+                            <span class="badge bg-info">
+                                <i class="bi bi-check-circle"></i> {{ permission.name }}
+                            </span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <p class="text-muted">No permissions assigned to your role.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

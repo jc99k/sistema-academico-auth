@@ -1,0 +1,60 @@
+{% extends 'sistema_academico/base.html' %}
+
+{% block title %}Setup 2FA - Sistema Academico{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-body p-5">
+                    <h2 class="text-center mb-4">
+                        <i class="bi bi-shield-plus"></i> Enable Two-Factor Authentication
+                    </h2>
+
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i>
+                        <strong>Secure your account with 2FA</strong><br>
+                        Scan the QR code below with your authenticator app (Google Authenticator, Authy, etc.)
+                    </div>
+
+                    <div class="text-center mb-4">
+                        <img src="{% url 'qr_code' %}" alt="QR Code" class="img-fluid" style="max-width: 300px;">
+                    </div>
+
+                    <div class="alert alert-secondary">
+                        <strong>Manual Entry:</strong><br>
+                        If you can't scan the QR code, enter this code manually in your app:<br>
+                        <code class="fs-5">{{ totp_uri }}</code>
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+
+                        <div class="mb-3">
+                            <label for="{{ form.token.id_for_label }}" class="form-label">
+                                Verification Code
+                            </label>
+                            {{ form.token }}
+                            {% if form.token.errors %}
+                            <div class="text-danger small">{{ form.token.errors }}</div>
+                            {% else %}
+                            <div class="form-text">{{ form.token.help_text }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-shield-check"></i> Verify and Enable 2FA
+                            </button>
+                            <a href="{% url 'dashboard' %}" class="btn btn-outline-secondary">
+                                Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

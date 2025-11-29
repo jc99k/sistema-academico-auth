@@ -1,0 +1,69 @@
+{% extends 'sistema_academico/base.html' %}
+
+{% block title %}Two-Factor Authentication - Sistema Academico{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="auth-card">
+        <div class="card shadow-lg">
+            <div class="card-body p-5">
+                <div class="text-center mb-4">
+                    <i class="bi bi-shield-lock-fill" style="font-size: 3rem; color: #667eea;"></i>
+                    <h2 class="mt-3">Two-Factor Authentication</h2>
+                    <p class="text-muted">
+                        {% if use_backup %}
+                        Enter a backup code
+                        {% else %}
+                        Enter the code from your authenticator app
+                        {% endif %}
+                    </p>
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+
+                    {% if form.non_field_errors %}
+                    <div class="alert alert-danger">
+                        {{ form.non_field_errors }}
+                    </div>
+                    {% endif %}
+
+                    <div class="mb-3">
+                        {% if use_backup %}
+                        <label for="{{ form.code.id_for_label }}" class="form-label">Backup Code</label>
+                        {{ form.code }}
+                        {% if form.code.errors %}
+                        <div class="text-danger small">{{ form.code.errors }}</div>
+                        {% endif %}
+                        {% else %}
+                        <label for="{{ form.token.id_for_label }}" class="form-label">Authentication Code</label>
+                        {{ form.token }}
+                        {% if form.token.errors %}
+                        <div class="text-danger small">{{ form.token.errors }}</div>
+                        {% endif %}
+                        {% endif %}
+                    </div>
+
+                    <div class="d-grid mb-3">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-shield-check"></i> Verify
+                        </button>
+                    </div>
+
+                    <div class="text-center">
+                        {% if use_backup %}
+                        <a href="{% url 'verify_2fa' %}" class="text-decoration-none">
+                            <i class="bi bi-arrow-left"></i> Use authenticator code instead
+                        </a>
+                        {% else %}
+                        <a href="{% url 'verify_2fa' %}?backup=1" class="text-decoration-none">
+                            <i class="bi bi-key"></i> Use backup code instead
+                        </a>
+                        {% endif %}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

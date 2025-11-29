@@ -1,0 +1,46 @@
+{% extends 'sistema_academico/base.html' %}
+
+{% block title %}Backup Codes - Sistema Academico{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-body p-5">
+                    <h2 class="text-center mb-4">
+                        <i class="bi bi-key-fill"></i> Backup Codes
+                    </h2>
+
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle-fill"></i>
+                        <strong>Important!</strong><br>
+                        Save these backup codes in a safe place. Each code can only be used once.
+                        You can use them to log in if you lose access to your authenticator app.
+                    </div>
+
+                    <div class="card bg-light mb-4">
+                        <div class="card-body">
+                            <div class="row g-2">
+                                {% for code in backup_codes %}
+                                <div class="col-6">
+                                    <code class="d-block p-2 bg-white border rounded text-center fs-5">
+                                        {{ code }}
+                                    </code>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-grid">
+                        <a href="{% url 'dashboard' %}" class="btn btn-primary">
+                            <i class="bi bi-check-circle"></i> I've Saved My Codes
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

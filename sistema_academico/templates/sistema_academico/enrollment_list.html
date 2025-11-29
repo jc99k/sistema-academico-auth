@@ -1,0 +1,111 @@
+{% extends 'sistema_academico/base.html' %}
+
+{% block title %}My Enrollments - Sistema Academico{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-journal-bookmark-fill"></i> Enrollments
+                    </h4>
+                    {% if user_profiles %}
+                    <small>
+                        Viewing as:
+                        {% for profile in user_profiles %}
+                            <span class="badge bg-light text-dark">{{ profile.get_profile_type_display }}</span>
+                        {% endfor %}
+                    </small>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    {% if enrollments %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Student</th>
+                                        <th>Course</th>
+                                        <th>Section</th>
+                                        <th>Professor</th>
+                                        <th>Period</th>
+                                        <th>Status</th>
+                                        <th>Grade</th>
+                                        <th>Grade Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for enrollment in enrollments %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ enrollment.student.user.get_full_name }}</strong><br>
+                                            <small class="text-muted">{{ enrollment.student.dni }}</small>
+                                        </td>
+                                        <td>
+                                            <strong>{{ enrollment.section.course.code }}</strong><br>
+                                            <small>{{ enrollment.section.course.name }}</small>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-secondary">{{ enrollment.section.code }}</span>
+                                        </td>
+                                        <td>{{ enrollment.section.professor.user.get_full_name }}</td>
+                                        <td>{{ enrollment.section.academic_period }}</td>
+                                        <td>
+                                            {% if enrollment.status == 'PAID' %}
+                                                <span class="badge bg-success">{{ enrollment.get_status_display }}</span>
+                                            {% elif enrollment.status == 'PENDING' %}
+                                                <span class="badge bg-warning text-dark">{{ enrollment.get_status_display }}</span>
+                                            {% elif enrollment.status == 'CANCELLED' %}
+                                                <span class="badge bg-danger">{{ enrollment.get_status_display }}</span>
+                                            {% else %}
+                                                <span class="badge bg-info">{{ enrollment.get_status_display }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if enrollment.grade %}
+                                                <strong>{{ enrollment.grade }}</strong>
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if enrollment.grade_status == 'PASSED' %}
+                                                <span class="badge bg-success">
+                                                    <i class="bi bi-check-circle"></i> Passed
+                                                </span>
+                                            {% elif enrollment.grade_status == 'FAILED' %}
+                                                <span class="badge bg-danger">
+                                                    <i class="bi bi-x-circle"></i> Failed
+                                                </span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">
+                                                    <i class="bi bi-clock"></i> Pending
+                                                </span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <a href="{% url 'enrollment_detail' enrollment.id %}"
+                                               class="btn btn-sm btn-outline-primary">
+                                                <i class="bi bi-eye"></i> View
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i>
+                            No enrollments found.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

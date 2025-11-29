@@ -1,14 +1,16 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.urls import reverse
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseForbidden
+from django.core.exceptions import PermissionDenied
 from .forms import LoginForm, TwoFactorForm, BackupCodeForm, Enable2FAForm
-from .models import User
+from .models import User, Enrollment, Profile
 import qrcode
 import qrcode.image.svg
 from io import BytesIO
+from decimal import Decimal
 
 
 def login_view(request):
@@ -83,8 +85,10 @@ def logout_view(request):
 
 @login_required
 def dashboard_view(request):
+    profiles = request.user.profiles.filter(is_active=True)
     return render(request, 'sistema_academico/dashboard.html', {
-        'user': request.user
+        'user': request.user,
+        'profiles': profiles
     })
 
 
@@ -191,3 +195,113 @@ def regenerate_backup_codes_view(request):
         })
 
     return render(request, 'sistema_academico/regenerate_backup_codes.html')
+
+
+# Enrollment Views
+
+@login_required
+def enrollment_list_view(request):
+    """
+    List enrollments based on user role and permissions.
+    Aggregates data from all user profiles.
+    """
+    user = request.user
+    enrollments_qs = Enrollment.objects.none()
+    profiles = user.profiles.filter(is_active=True)
+
+    if not profiles.exists():
+        messages.error(request, 'You must have a profile to view enrollments.')
+        return redirect('dashboard')
+
+    # Collect enrollments from all profiles
+    for profile in profiles:
+        # Students see their own enrollments
+        if profile.is_student and profile.has_permission('view_own_enrollment'):
+            enrollments_qs = enrollments_qs | Enrollment.objects.filter(student=profile)
+
+        # Professors see enrollments in their sections
+        if profile.is_professor and profile.has_permission('view_section_enrollments'):
+            enrollments_qs = enrollments_qs | Enrollment.objects.filter(section__professor=profile)
+
+        # Users with view_all_enrollments permission see everything
+        if profile.has_permission('view_all_enrollments'):
+            enrollments_qs = Enrollment.objects.all()
+            break  # No need to check further
+
+    # Apply select_related and ordering
+    enrollments = enrollments_qs.select_related(
+        'student__user',
+        'section__course__career',
+        'section__professor__user',
+        'graded_by__user'
+    ).distinct().order_by('-enrollment_date')
+
+    if not enrollments.exists() and not any(p.has_permission('view_all_enrollments') for p in profiles):
+        messages.info(request, 'No enrollments found for your profiles.')
+
+    return render(request, 'sistema_academico/enrollment_list.html', {
+        'enrollments': enrollments,
+        'profiles': profiles,
+        'user_profiles': profiles  # For template logic
+    })
+
+
+@login_required
+def enrollment_detail_view(request, enrollment_id):
+    """View details of a specific enrollment"""
+    enrollment = get_object_or_404(
+        Enrollment.objects.select_related(
+            'student__user',
+            'section__course__career',
+            'section__professor__user',
+            'graded_by__user'
+        ),
+        pk=enrollment_id
+    )
+
+    # Check if user can view this enrollment
+    if not enrollment.can_be_viewed_by(request.user):
+        raise PermissionDenied('You do not have permission to view this enrollment.')
+
+    # Check if user can grade this enrollment
+    can_grade = enrollment.can_be_graded_by(request.user)
+
+    return render(request, 'sistema_academico/enrollment_detail.html', {
+        'enrollment': enrollment,
+        'can_grade': can_grade
+    })
+
+
+@login_required
+def enrollment_grade_view(request, enrollment_id):
+    """Grade a specific enrollment"""
+    enrollment = get_object_or_404(
+        Enrollment.objects.select_related(
+            'student__user',
+            'section__course__career',
+            'section__professor__user'
+        ),
+        pk=enrollment_id
+    )
+
+    # Check if user can grade this enrollment
+    if not enrollment.can_be_graded_by(request.user):
+        raise PermissionDenied('You do not have permission to grade this enrollment.')
+
+    if request.method == 'POST':
+        try:
+            grade_value = Decimal(request.POST.get('grade', '0'))
+            grade_notes = request.POST.get('grade_notes', '')
+
+            enrollment.set_grade(grade_value, request.user, grade_notes)
+            messages.success(request, f'Grade {grade_value} successfully assigned to {enrollment.student.user.get_full_name()}')
+            return redirect('enrollment_detail', enrollment_id=enrollment.id)
+
+        except ValueError as e:
+            messages.error(request, str(e))
+        except Exception as e:
+            messages.error(request, f'Error grading enrollment: {str(e)}')
+
+    return render(request, 'sistema_academico/enrollment_grade.html', {
+        'enrollment': enrollment
+    })

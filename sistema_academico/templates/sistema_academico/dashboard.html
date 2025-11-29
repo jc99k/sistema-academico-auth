@@ -43,13 +43,91 @@
                             <td>{{ user.employee_id }}</td>
                         </tr>
                         {% endif %}
-                        {% if user.role %}
+                        {% if profiles %}
                         <tr>
-                            <td><strong>Role:</strong></td>
-                            <td><span class="badge bg-primary">{{ user.role.name }}</span></td>
+                            <td><strong>Profiles:</strong></td>
+                            <td>
+                                {% for profile in profiles %}
+                                    <span class="badge bg-primary me-1">
+                                        {{ profile.get_profile_type_display }}
+                                    </span>
+                                    {% if profile.career and profile.is_student %}
+                                        <small class="text-muted">({{ profile.career.name }})</small>
+                                    {% endif %}
+                                    {% if not forloop.last %}<br>{% endif %}
+                                {% endfor %}
+                            </td>
                         </tr>
                         {% endif %}
                     </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions Card -->
+        <div class="col-md-6 mb-4">
+            <div class="card shadow">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="bi bi-lightning-fill"></i> Quick Actions
+                    </h5>
+                    <hr>
+                    <div class="d-grid gap-2">
+                        {% if profiles %}
+                            <a href="{% url 'enrollment_list' %}" class="btn btn-primary">
+                                <i class="bi bi-journal-bookmark-fill"></i> View Enrollments
+                            </a>
+                        {% endif %}
+                        <a href="/admin/" class="btn btn-outline-secondary">
+                            <i class="bi bi-gear-fill"></i> Admin Panel
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <div class="card shadow">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="bi bi-shield-check"></i> Security Settings
+                    </h5>
+                    <hr>
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="flex-grow-1">
+                            <strong>Two-Factor Authentication</strong>
+                            <p class="text-muted small mb-0">Add an extra layer of security</p>
+                        </div>
+                        <div>
+                            {% if user.is_2fa_enabled %}
+                            <span class="badge bg-success">Enabled</span>
+                            {% else %}
+                            <span class="badge bg-warning">Disabled</span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    {% if user.is_2fa_enabled %}
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'view_backup_codes' %}" class="btn btn-outline-primary">
+                            <i class="bi bi-key"></i> View Backup Codes
+                        </a>
+                        <a href="{% url 'regenerate_backup_codes' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-clockwise"></i> Regenerate Backup Codes
+                        </a>
+                        <a href="{% url 'disable_2fa' %}" class="btn btn-outline-danger">
+                            <i class="bi bi-shield-x"></i> Disable 2FA
+                        </a>
+                    </div>
+                    {% else %}
+                    <div class="d-grid">
+                        <a href="{% url 'setup_2fa' %}" class="btn btn-primary">
+                            <i class="bi bi-shield-plus"></i> Enable 2FA
+                        </a>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
@@ -200,28 +278,36 @@
         </div>
     </div>
 
-    {% if user.role %}
+    {% if profiles %}
     <div class="row">
         <div class="col-12">
             <div class="card shadow">
                 <div class="card-body">
                     <h5 class="card-title">
-                        <i class="bi bi-key-fill"></i> Permissions
+                        <i class="bi bi-key-fill"></i> Permissions Across All Profiles
                     </h5>
                     <hr>
-                    {% if user.role.permissions.all %}
-                    <div class="row">
-                        {% for permission in user.role.permissions.all %}
-                        <div class="col-md-4 mb-2">
-                            <span class="badge bg-info">
-                                <i class="bi bi-check-circle"></i> {{ permission.name }}
-                            </span>
+                    {% for profile in profiles %}
+                        <h6 class="text-muted mt-3">
+                            {{ profile.get_profile_type_display }}
+                            {% if profile.career and profile.is_student %}
+                                <small class="text-muted">- {{ profile.career.name }}</small>
+                            {% endif %}
+                        </h6>
+                        {% if profile.role and profile.role.permissions.all %}
+                        <div class="row mb-3">
+                            {% for permission in profile.role.permissions.all %}
+                            <div class="col-md-4 mb-2">
+                                <span class="badge bg-info">
+                                    <i class="bi bi-check-circle"></i> {{ permission.name }}
+                                </span>
+                            </div>
+                            {% endfor %}
                         </div>
-                        {% endfor %}
-                    </div>
-                    {% else %}
-                    <p class="text-muted">No permissions assigned to your role.</p>
-                    {% endif %}
+                        {% else %}
+                        <p class="text-muted small">No permissions assigned to this profile.</p>
+                        {% endif %}
+                    {% endfor %}
                 </div>
             </div>
         </div>

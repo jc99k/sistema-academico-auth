@@ -1,0 +1,136 @@
+{% extends 'sistema_academico/base.html' %}
+
+{% block title %}Grade Enrollment - Sistema Academico{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <a href="{% url 'enrollment_detail' enrollment.id %}" class="btn btn-outline-secondary mb-3">
+                <i class="bi bi-arrow-left"></i> Back to Enrollment
+            </a>
+
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-pencil-square"></i>
+                        {% if enrollment.grade %}Update{% else %}Assign{% endif %} Grade
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <h6><i class="bi bi-info-circle"></i> Student Information</h6>
+                        <p class="mb-1"><strong>Name:</strong> {{ enrollment.student.user.get_full_name }}</p>
+                        <p class="mb-1"><strong>Course:</strong> {{ enrollment.section.course.code }} - {{ enrollment.section.course.name }}</p>
+                        <p class="mb-0"><strong>Section:</strong> {{ enrollment.section.code }} ({{ enrollment.section.academic_period }})</p>
+                    </div>
+
+                    <form method="post" class="needs-validation" novalidate>
+                        {% csrf_token %}
+
+                        <div class="mb-4">
+                            <label for="grade" class="form-label">
+                                <strong>Grade (0-20)</strong>
+                                <span class="text-danger">*</span>
+                            </label>
+                            <input type="number"
+                                   class="form-control form-control-lg"
+                                   id="grade"
+                                   name="grade"
+                                   min="0"
+                                   max="20"
+                                   step="0.01"
+                                   value="{% if enrollment.grade %}{{ enrollment.grade }}{% endif %}"
+                                   required>
+                            <div class="form-text">
+                                Enter a grade between 0 and 20. Passing grade is 11 or higher.
+                            </div>
+                            <div class="invalid-feedback">
+                                Please enter a valid grade between 0 and 20.
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="grade_notes" class="form-label">
+                                <strong>Notes/Comments</strong>
+                            </label>
+                            <textarea class="form-control"
+                                      id="grade_notes"
+                                      name="grade_notes"
+                                      rows="4"
+                                      placeholder="Optional: Add any comments or feedback about the student's performance">{% if enrollment.grade_notes %}{{ enrollment.grade_notes }}{% endif %}</textarea>
+                            <div class="form-text">
+                                Provide feedback or additional information about the grade.
+                            </div>
+                        </div>
+
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle"></i>
+                            <strong>Note:</strong> This grade will be recorded in the student's academic record.
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="{% url 'enrollment_detail' enrollment.id %}"
+                               class="btn btn-secondary">
+                                <i class="bi bi-x-circle"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle"></i> Save Grade
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            {% if enrollment.grade %}
+            <div class="card shadow mt-4">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0">
+                        <i class="bi bi-clock-history"></i> Grade History
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <p class="mb-1">
+                        <strong>Current Grade:</strong>
+                        <span class="{% if enrollment.is_passed %}text-success{% else %}text-danger{% endif %}">
+                            {{ enrollment.grade }}
+                        </span>
+                        {% if enrollment.grade_status == 'PASSED' %}
+                            <span class="badge bg-success">PASSED</span>
+                        {% elif enrollment.grade_status == 'FAILED' %}
+                            <span class="badge bg-danger">FAILED</span>
+                        {% endif %}
+                    </p>
+                    {% if enrollment.graded_by %}
+                    <p class="mb-0 text-muted small">
+                        Last updated by {{ enrollment.graded_by.user.get_full_name }}
+                        on {{ enrollment.graded_at|date:"F d, Y g:i A" }}
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Form validation
+(function() {
+    'use strict';
+    var forms = document.querySelectorAll('.needs-validation');
+    Array.prototype.slice.call(forms).forEach(function(form) {
+        form.addEventListener('submit', function(event) {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            form.classList.add('was-validated');
+        }, false);
+    });
+})();
+</script>
+{% endblock %}

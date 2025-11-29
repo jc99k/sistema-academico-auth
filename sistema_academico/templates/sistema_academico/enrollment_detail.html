@@ -1,0 +1,189 @@
+{% extends 'sistema_academico/base.html' %}
+
+{% block title %}Enrollment Details - Sistema Academico{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <a href="{% url 'enrollment_list' %}" class="btn btn-outline-secondary mb-3">
+                <i class="bi bi-arrow-left"></i> Back to Enrollments
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-journal-bookmark"></i> Enrollment Details
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Student Information</h6>
+                            <p class="mb-1">
+                                <strong>Name:</strong> {{ enrollment.student.user.get_full_name }}
+                            </p>
+                            <p class="mb-1">
+                                <strong>DNI:</strong> {{ enrollment.student.dni }}
+                            </p>
+                            <p class="mb-0">
+                                <strong>Email:</strong> {{ enrollment.student.user.email }}
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Enrollment Information</h6>
+                            <p class="mb-1">
+                                <strong>Date:</strong> {{ enrollment.enrollment_date|date:"F d, Y" }}
+                            </p>
+                            <p class="mb-1">
+                                <strong>Status:</strong>
+                                {% if enrollment.status == 'PAID' %}
+                                    <span class="badge bg-success">{{ enrollment.get_status_display }}</span>
+                                {% elif enrollment.status == 'PENDING' %}
+                                    <span class="badge bg-warning text-dark">{{ enrollment.get_status_display }}</span>
+                                {% elif enrollment.status == 'CANCELLED' %}
+                                    <span class="badge bg-danger">{{ enrollment.get_status_display }}</span>
+                                {% else %}
+                                    <span class="badge bg-info">{{ enrollment.get_status_display }}</span>
+                                {% endif %}
+                            </p>
+                            <p class="mb-0">
+                                <strong>Cost:</strong> ${{ enrollment.cost }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <h6 class="text-muted">Course Information</h6>
+                            <p class="mb-1">
+                                <strong>Code:</strong> {{ enrollment.section.course.code }}
+                            </p>
+                            <p class="mb-1">
+                                <strong>Name:</strong> {{ enrollment.section.course.name }}
+                            </p>
+                            <p class="mb-1">
+                                <strong>Career:</strong> {{ enrollment.section.course.career.name }}
+                            </p>
+                            <p class="mb-1">
+                                <strong>Credits:</strong> {{ enrollment.section.course.credits }}
+                            </p>
+                            <p class="mb-0">
+                                <strong>Semester Level:</strong> {{ enrollment.section.course.semester_level }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Section Information</h6>
+                            <p class="mb-1">
+                                <strong>Section:</strong> {{ enrollment.section.code }}
+                            </p>
+                            <p class="mb-1">
+                                <strong>Academic Period:</strong> {{ enrollment.section.academic_period }}
+                            </p>
+                            {% if enrollment.section.schedule %}
+                            <p class="mb-1">
+                                <strong>Schedule:</strong> {{ enrollment.section.schedule }}
+                            </p>
+                            {% endif %}
+                            {% if enrollment.section.days %}
+                            <p class="mb-1">
+                                <strong>Days:</strong> {{ enrollment.section.days }}
+                            </p>
+                            {% endif %}
+                            {% if enrollment.section.classroom %}
+                            <p class="mb-0">
+                                <strong>Classroom:</strong> {{ enrollment.section.classroom }}
+                            </p>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted">Professor</h6>
+                            <p class="mb-1">
+                                <strong>Name:</strong> {{ enrollment.section.professor.user.get_full_name }}
+                            </p>
+                            {% if enrollment.section.professor.specialty %}
+                            <p class="mb-0">
+                                <strong>Specialty:</strong> {{ enrollment.section.professor.specialty }}
+                            </p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow mb-4">
+                <div class="card-header {% if enrollment.grade %}bg-success{% else %}bg-secondary{% endif %} text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-clipboard-check"></i> Grade
+                    </h5>
+                </div>
+                <div class="card-body text-center">
+                    {% if enrollment.grade %}
+                        <h1 class="display-3 {% if enrollment.is_passed %}text-success{% else %}text-danger{% endif %}">
+                            {{ enrollment.grade }}
+                        </h1>
+                        <h5>
+                            {% if enrollment.grade_status == 'PASSED' %}
+                                <span class="badge bg-success">
+                                    <i class="bi bi-check-circle"></i> PASSED
+                                </span>
+                            {% elif enrollment.grade_status == 'FAILED' %}
+                                <span class="badge bg-danger">
+                                    <i class="bi bi-x-circle"></i> FAILED
+                                </span>
+                            {% endif %}
+                        </h5>
+
+                        {% if enrollment.grade_notes %}
+                        <div class="alert alert-info mt-3 text-start">
+                            <strong>Notes:</strong><br>
+                            {{ enrollment.grade_notes }}
+                        </div>
+                        {% endif %}
+
+                        {% if enrollment.graded_by %}
+                        <p class="text-muted small mb-0 mt-3">
+                            Graded by: {{ enrollment.graded_by.user.get_full_name }}<br>
+                            {{ enrollment.graded_at|date:"F d, Y g:i A" }}
+                        </p>
+                        {% endif %}
+
+                        {% if can_grade %}
+                        <hr>
+                        <a href="{% url 'enrollment_grade' enrollment.id %}"
+                           class="btn btn-warning btn-sm">
+                            <i class="bi bi-pencil"></i> Update Grade
+                        </a>
+                        {% endif %}
+                    {% else %}
+                        <h3 class="text-muted">
+                            <i class="bi bi-clock-history" style="font-size: 3rem;"></i>
+                        </h3>
+                        <p class="text-muted">Not graded yet</p>
+
+                        {% if can_grade %}
+                        <a href="{% url 'enrollment_grade' enrollment.id %}"
+                           class="btn btn-primary">
+                            <i class="bi bi-pencil-square"></i> Assign Grade
+                        </a>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

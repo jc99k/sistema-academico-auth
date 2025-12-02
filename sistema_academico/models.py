@@ -546,7 +546,7 @@ class Enrollment(models.Model):
         null=True,
         blank=True,
         related_name='graded_enrollments',
-        limit_choices_to={'profile_type': 'professor'}
+        limit_choices_to={'role__name__in': Profile.PROFESSOR_ROLE_TYPES}
     )
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -640,7 +640,7 @@ class Enrollment(models.Model):
             return self.section.professor == profile
 
         # Check all professor profiles
-        for prof in user.profiles.filter(profile_type='professor', is_active=True):
+        for prof in user.profiles.filter(role__name__in=Profile.PROFESSOR_ROLE_TYPES, is_active=True):
             if prof.has_permission('grade_enrollment'):
                 if self.section.professor == prof:
                     return True
@@ -658,7 +658,7 @@ class Enrollment(models.Model):
         # If no profile specified, find the professor profile for this section
         if not profile:
             professor_profiles = user.profiles.filter(
-                profile_type='professor',
+                role__name__in=Profile.PROFESSOR_ROLE_TYPES,
                 is_active=True
             )
             for prof in professor_profiles:
